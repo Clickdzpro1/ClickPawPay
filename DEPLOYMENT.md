@@ -1,5 +1,45 @@
 # ClickPawPay Deployment Guide
 
+---
+
+## ⚠️ Hostinger VPS / Managed Docker — Required Environment Variables
+
+The API container will crash with `FATAL: Missing required environment variables` if these are not set in the platform's environment configuration **before** deploying.
+
+### Required Variables
+
+| Variable | Description | How to Generate |
+|---|---|---|
+| `JWT_SECRET` | Signs JWT tokens — min 32 chars | `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+| `ENCRYPTION_KEY` | AES-256-GCM key — exactly 64 hex chars | `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+| `ANTHROPIC_API_KEY` | Claude API key | Get from https://console.anthropic.com |
+
+### How to Set Them in Hostinger
+
+1. Open your Hostinger hPanel → **VPS** → your server → **Docker Manager**
+2. Find the `clickpawpay-api` service → **Environment Variables**
+3. Add each variable with its generated value:
+
+```
+JWT_SECRET=<paste-64-hex-chars-here>
+ENCRYPTION_KEY=<paste-64-hex-chars-here>
+ANTHROPIC_API_KEY=sk-ant-api03-...
+```
+
+> **Note:** `DATABASE_URL`, `REDIS_URL`, and `ALLOWED_ORIGINS` are already set in `docker-compose.yml` with defaults that work for this deployment. Only the three secrets above require manual configuration.
+
+### Generate Values (run these locally or in VPS terminal)
+
+```bash
+# JWT_SECRET
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+# ENCRYPTION_KEY (must be exactly 64 hex chars)
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+---
+
 ## VPS Setup (Ubuntu 22.04)
 
 ### 1. Initial Server Setup
