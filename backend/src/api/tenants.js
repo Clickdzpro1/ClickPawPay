@@ -1,11 +1,10 @@
 // Tenants API — tenant profile management
 const express  = require('express');
 const router   = express.Router();
-const { PrismaClient } = require('@prisma/client');
+const prisma       = require('../utils/prisma');
 const { encrypt } = require('../utils/encryption');
 const logger   = require('../utils/logger');
 
-const prisma = new PrismaClient();
 
 /**
  * GET /api/tenants/me
