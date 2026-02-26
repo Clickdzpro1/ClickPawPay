@@ -1,5 +1,12 @@
 # ClickClawPay 🚀
 
+![Node](https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js)
+![License](https://img.shields.io/badge/License-MIT-blue)
+![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791?logo=postgresql)
+![AI](https://img.shields.io/badge/AI-Claude%20Powered-blueviolet?logo=anthropic)
+![Status](https://img.shields.io/badge/Status-Active-brightgreen)
+
 **AI-Powered Payment Management for Algerian Sellers**
 
 ClickClawPay is an AI agent platform that helps Algerian e-commerce sellers manage SlickPay payments through natural language. Built on OpenClaw-inspired architecture, it provides a hosted, multi-tenant SaaS solution where sellers can link their SlickPay API keys and control payments via conversational AI.
