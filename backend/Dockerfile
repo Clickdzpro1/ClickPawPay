@@ -1,4 +1,4 @@
-# ClickClawPay Backend Dockerfile
+# ClickPawPay Backend Dockerfile
 FROM node:18-alpine
 
 WORKDIR /app
