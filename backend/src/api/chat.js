@@ -24,7 +24,7 @@ const MAX_MESSAGE_LENGTH = parseInt(process.env.MAX_MESSAGE_LENGTH || '4000', 10
  */
 router.post('/', async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, conversationId: requestedConvId } = req.body;
     const { tenantId, userId } = req.user; // set by authMiddleware
 
     // ── Input validation ───────────────────────────────────────────────────
@@ -38,7 +38,7 @@ router.post('/', async (req, res) => {
     }
     // ───────────────────────────────────────────────────────────────────────
 
-    // ── Atomic check-and-increment of request counter ─────────────────────
+    // ── Atomic check-and-increment of request counter (with monthly reset) ──
     // Uses a Prisma transaction to prevent race conditions where two concurrent
     // requests both pass the limit check before either increments the counter.
     const tenant = await prisma.$transaction(async (tx) => {
@@ -46,6 +46,18 @@ router.post('/', async (req, res) => {
 
       if (!t) return null;
       if (!t.isActive) return { __inactive: true };
+
+      // Reset counter if resetDate has passed
+      const now = new Date();
+      if (t.resetDate && now >= t.resetDate) {
+        const nextReset = new Date(now);
+        nextReset.setMonth(nextReset.getMonth() + 1);
+        return tx.tenant.update({
+          where: { id: tenantId },
+          data:  { requestCount: 1, resetDate: nextReset }
+        });
+      }
+
       if (t.requestCount >= t.requestLimit) {
         return { __limitExceeded: true, requestLimit: t.requestLimit, resetDate: t.resetDate };
       }
@@ -70,11 +82,16 @@ router.post('/', async (req, res) => {
     // Decrypt SlickPay API key for this tenant
     const slickpayKey = decrypt(tenant.slickpayKeyEnc);
 
-    // Get or create the active conversation for this user
-    let conversation = await prisma.conversation.findFirst({
-      where:   { tenantId, userId, isActive: true },
-      orderBy: { updatedAt: 'desc' }
-    });
+    // Get or create conversation.
+    // Only resume a specific conversation when the client explicitly provides its ID.
+    // If no conversationId is given (e.g. first message or after "New Chat"), always
+    // create a fresh conversation so new chats never bleed into old history.
+    let conversation = null;
+    if (requestedConvId) {
+      conversation = await prisma.conversation.findFirst({
+        where: { id: requestedConvId, tenantId, userId, isActive: true }
+      });
+    }
 
     const conversationHistory = conversation?.messages || [];
 
@@ -145,11 +162,11 @@ router.post('/', async (req, res) => {
     });
 
     return res.json({
-      response:       result.response,
-      conversationId: conversation.id,
-      toolCalls: result.toolCalls.map(tc => ({
+      reply:             result.response,
+      conversationId:    conversation.id,
+      toolCallsExecuted: result.toolCalls.map(tc => ({
         tool:    tc.tool,
-        success: tc.result.success
+        success: tc.result?.success ?? false
       }))
     });
 
@@ -181,6 +198,30 @@ router.get('/conversations', async (req, res) => {
   } catch (error) {
     logger.error('List conversations error', { error: error.message });
     return res.status(500).json({ error: 'Failed to fetch conversations' });
+  }
+});
+
+/**
+ * GET /api/chat/:conversationId - Fetch messages for a specific conversation
+ */
+router.get('/:conversationId', async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const { tenantId, userId } = req.user;
+
+    const conversation = await prisma.conversation.findFirst({
+      where: { id: conversationId, tenantId, userId },
+      select: { id: true, messages: true, createdAt: true, updatedAt: true, isActive: true }
+    });
+
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    return res.json({ conversation });
+  } catch (error) {
+    logger.error('Get conversation error', { error: error.message });
+    return res.status(500).json({ error: 'Failed to fetch conversation' });
   }
 });
 

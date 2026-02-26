@@ -18,10 +18,12 @@ const { PrismaClient } = require('@prisma/client');
 const logger = require('./src/utils/logger');
 
 // Import routes
-const authRoutes = require('./src/api/auth');
-const tenantRoutes = require('./src/api/tenants');
-const chatRoutes = require('./src/api/chat');
+const authRoutes        = require('./src/api/auth');
+const tenantRoutes      = require('./src/api/tenants');
+const chatRoutes        = require('./src/api/chat');
 const transactionRoutes = require('./src/api/transactions');
+const balanceRoutes     = require('./src/api/balance');
+const settingsRoutes    = require('./src/api/settings');
 
 // Import middleware
 const tenantScopeMiddleware = require('./src/middleware/tenantScope');
@@ -65,9 +67,11 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', rateLimitMiddleware, authRoutes);
 
 // Protected routes (require authentication and tenant scope)
-app.use('/api/tenants', authMiddleware, tenantRoutes);
-app.use('/api/chat', authMiddleware, tenantScopeMiddleware, rateLimitMiddleware, chatRoutes);
+app.use('/api/tenants',      authMiddleware, tenantRoutes);
+app.use('/api/chat',         authMiddleware, tenantScopeMiddleware, rateLimitMiddleware, chatRoutes);
 app.use('/api/transactions', authMiddleware, tenantScopeMiddleware, transactionRoutes);
+app.use('/api/balance',      authMiddleware, tenantScopeMiddleware, balanceRoutes);
+app.use('/api/settings',     authMiddleware, tenantScopeMiddleware, settingsRoutes);
 
 // 404 handler
 app.use((req, res) => {

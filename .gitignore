@@ -27,6 +27,9 @@ out/
 # IDE
 .vscode/
 .idea/
+
+# Claude Code AI session files (private)
+.claude/
 *.swp
 *.swo
 *~
