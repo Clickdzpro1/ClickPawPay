@@ -1,6 +1,8 @@
 // Logger utility using Winston
 const winston = require('winston');
-const path = require('path');
+const path    = require('path');
+
+const LOG_DIR = process.env.LOG_DIR || path.join(__dirname, '../../logs');
 
 const logFormat = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
@@ -13,30 +15,22 @@ const logger = winston.createLogger({
   format: logFormat,
   defaultMeta: { service: 'clickclawpay' },
   transports: [
-    // Write all logs to console
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple()
-      )
-    }),
-    // Write all logs to combined.log
-    new winston.transports.File({ 
-      filename: path.join(__dirname, '../../logs/combined.log'),
-      maxsize: 5242880, // 5MB
+    // File transports — always active in all environments
+    new winston.transports.File({
+      filename: path.join(LOG_DIR, 'combined.log'),
+      maxsize:  5242880, // 5 MB
       maxFiles: 5
     }),
-    // Write error logs to error.log
-    new winston.transports.File({ 
-      filename: path.join(__dirname, '../../logs/error.log'),
-      level: 'error',
-      maxsize: 5242880,
+    new winston.transports.File({
+      filename: path.join(LOG_DIR, 'error.log'),
+      level:    'error',
+      maxsize:  5242880,
       maxFiles: 5
     })
   ]
 });
 
-// If not in production, log to console with pretty formatting
+// Console transport in non-production only (added once — no duplicate)
 if (process.env.NODE_ENV !== 'production') {
   logger.add(new winston.transports.Console({
     format: winston.format.combine(

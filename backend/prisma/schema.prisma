@@ -48,6 +48,7 @@ model User {
   conversations  Conversation[]
   
   @@unique([tenantId, email])
+  @@index([tenantId])
   @@map("users")
 }
 
@@ -74,7 +75,7 @@ model Transaction {
   tenantId      String
   slickpayRef   String?         // SlickPay transaction reference
   type          TransactionType
-  amount        Float
+  amount        Decimal  @db.Decimal(18, 2)
   currency      String          @default("DZD")
   fromAccount   String?
   toAccount     String?
@@ -88,6 +89,8 @@ model Transaction {
   
   @@index([tenantId, createdAt])
   @@index([slickpayRef])
+  @@index([tenantId])
+  @@unique([tenantId, slickpayRef], name: "unique_tenant_slickpay_ref")
   @@map("transactions")
 }
 
@@ -105,6 +108,7 @@ model AuditLog {
   tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   
   @@index([tenantId, timestamp])
+  @@index([tenantId])
   @@map("audit_logs")
 }
 

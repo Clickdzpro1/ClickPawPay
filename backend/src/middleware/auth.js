@@ -2,7 +2,8 @@
 const jwt = require('jsonwebtoken');
 const logger = require('../utils/logger');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+// JWT_SECRET is guaranteed non-null by server.js startup guard.
+const JWT_SECRET = process.env.JWT_SECRET;
 
 function authMiddleware(req, res, next) {
   try {
@@ -15,14 +16,14 @@ function authMiddleware(req, res, next) {
 
     const token = authHeader.replace('Bearer ', '');
 
-    // Verify token
-    const decoded = jwt.verify(token, JWT_SECRET);
+    // Verify token — explicit algorithms prevents alg:none / algorithm-confusion attacks
+    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
 
     // Attach user info to request
     req.user = {
-      userId: decoded.userId,
+      userId:   decoded.userId,
       tenantId: decoded.tenantId,
-      role: decoded.role
+      role:     decoded.role
     };
 
     next();
@@ -31,9 +32,9 @@ function authMiddleware(req, res, next) {
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({ error: 'Token expired' });
     }
-    
+
     logger.error('Auth middleware error', { error: error.message });
-    res.status(401).json({ error: 'Invalid token' });
+    return res.status(401).json({ error: 'Invalid token' }); // return added to prevent double-response
   }
 }
 

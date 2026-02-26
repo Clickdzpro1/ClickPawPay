@@ -1,5 +1,16 @@
 // ClickClawPay Backend Server
 require('dotenv').config();
+
+// ── Fail-fast: crash immediately if required secrets are missing ──────────────
+const REQUIRED_ENV = ['JWT_SECRET', 'ENCRYPTION_KEY', 'DATABASE_URL', 'ANTHROPIC_API_KEY'];
+const missingEnv = REQUIRED_ENV.filter(k => !process.env[k]);
+if (missingEnv.length > 0) {
+  console.error(`\nFATAL: Missing required environment variables: ${missingEnv.join(', ')}`);
+  console.error('Copy backend/.env.example to backend/.env and fill in all values.\n');
+  process.exit(1);
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -29,7 +40,7 @@ app.use(cors({
 }));
 
 // Body parsing
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Request logging
