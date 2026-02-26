@@ -1,0 +1,135 @@
+// Prisma Schema for ClickClawPay
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Tenant model - each seller organization
+model Tenant {
+  id                String   @id @default(uuid())
+  subdomain         String   @unique
+  name              String
+  plan              Plan     @default(STARTER)
+  slickpayKeyEnc    String   // Encrypted SlickPay API key
+  isActive          Boolean  @default(true)
+  requestCount      Int      @default(0)
+  requestLimit      Int      @default(100)
+  resetDate         DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  users             User[]
+  conversations     Conversation[]
+  transactions      Transaction[]
+  auditLogs         AuditLog[]
+  
+  @@map("tenants")
+}
+
+// User model - members of each tenant
+model User {
+  id           String   @id @default(uuid())
+  tenantId     String
+  email        String
+  passwordHash String
+  role         Role     @default(MEMBER)
+  firstName    String?
+  lastName     String?
+  isActive     Boolean  @default(true)
+  lastLogin    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  conversations  Conversation[]
+  
+  @@unique([tenantId, email])
+  @@map("users")
+}
+
+// Conversation model - chat history with the AI agent
+model Conversation {
+  id         String   @id @default(uuid())
+  tenantId   String
+  userId     String
+  messages   Json     // Array of {role, content, timestamp, toolCalls}
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId, userId])
+  @@map("conversations")
+}
+
+// Transaction model - payment operations processed by the agent
+model Transaction {
+  id            String          @id @default(uuid())
+  tenantId      String
+  slickpayRef   String?         // SlickPay transaction reference
+  type          TransactionType
+  amount        Float
+  currency      String          @default("DZD")
+  fromAccount   String?
+  toAccount     String?
+  status        TxStatus        @default(PENDING)
+  description   String?
+  metadata      Json?           // Additional SlickPay response data
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  
+  tenant        Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId, createdAt])
+  @@index([slickpayRef])
+  @@map("transactions")
+}
+
+// Audit log - track all agent actions for security
+model AuditLog {
+  id         String   @id @default(uuid())
+  tenantId   String
+  action     String   // e.g., "create_transfer", "list_accounts"
+  userId     String?
+  details    Json     // Full request/response for accountability
+  ipAddress  String?
+  userAgent  String?
+  timestamp  DateTime @default(now())
+  
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId, timestamp])
+  @@map("audit_logs")
+}
+
+// Enums
+enum Plan {
+  STARTER
+  PRO
+  BUSINESS
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum TransactionType {
+  TRANSFER
+  INVOICE
+  REFUND
+}
+
+enum TxStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
