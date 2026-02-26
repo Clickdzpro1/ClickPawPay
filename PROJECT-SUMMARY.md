@@ -1,4 +1,4 @@
-# ClickClawPay Project Summary
+# ClickPawPay Project Summary
 
 ## 📋 What We Built
 
@@ -9,6 +9,7 @@ A complete, production-ready **AI payment agent SaaS platform** for Algerian sel
 ## ✅ Completed Components
 
 ### Backend (Node.js + Express + Prisma)
+
 - ✅ Agent Engine with OpenClaw-inspired observe-think-act loop
 - ✅ 8 SlickPay skills (transfers, invoices, balance, accounts, etc.)
 - ✅ Multi-tenant architecture with subdomain routing
@@ -19,6 +20,7 @@ A complete, production-ready **AI payment agent SaaS platform** for Algerian sel
 - ✅ Complete API routes (auth, chat, transactions, tenants)
 
 ### Infrastructure
+
 - ✅ Docker + Docker Compose configuration
 - ✅ Nginx reverse proxy with SSL support
 - ✅ PostgreSQL + Redis containers
@@ -26,6 +28,7 @@ A complete, production-ready **AI payment agent SaaS platform** for Algerian sel
 - ✅ Environment variable management
 
 ### Documentation
+
 - ✅ Comprehensive README with architecture diagrams
 - ✅ Step-by-step deployment guide for VPS
 - ✅ Security hardening instructions
@@ -37,37 +40,37 @@ A complete, production-ready **AI payment agent SaaS platform** for Algerian sel
 ## 🗂️ File Structure
 
 ```
-clickclawpay/
+clickpawpay/
 ├── backend/
 │   ├── src/
 │   │   ├── agent/
-│   │   │   ├── engine.js              # Core AI loop
-│   │   │   ├── promptBuilder.js       # System prompt construction
-│   │   │   └── toolExecutor.js        # Tool execution handler
+│   │   │   ├── engine.js          # Core AI loop
+│   │   │   ├── promptBuilder.js   # System prompt construction
+│   │   │   └── toolExecutor.js    # Tool execution handler
 │   │   ├── skills/
-│   │   │   └── slickpaySkills.js      # 8 SlickPay operations
+│   │   │   └── slickpaySkills.js  # 8 SlickPay operations
 │   │   ├── api/
-│   │   │   ├── auth.js                # Login/register
-│   │   │   ├── chat.js                # Agent interaction
-│   │   │   └── transactions.js        # Payment history
+│   │   │   ├── auth.js            # Login/register
+│   │   │   ├── chat.js            # Agent interaction
+│   │   │   └── transactions.js    # Payment history
 │   │   ├── middleware/
-│   │   │   ├── auth.js                # JWT verification
-│   │   │   └── rateLimit.js           # Rate limiting
+│   │   │   ├── auth.js            # JWT verification
+│   │   │   └── rateLimit.js       # Rate limiting
 │   │   └── utils/
-│   │       ├── encryption.js          # AES-256 for API keys
-│   │       ├── logger.js              # Winston logging
-│   │       └── slickpayClient.js      # API wrapper
+│   │       ├── encryption.js      # AES-256 for API keys
+│   │       ├── logger.js          # Winston logging
+│   │       └── slickpayClient.js  # API wrapper
 │   ├── prisma/
-│   │   └── schema.prisma              # Database schema
+│   │   └── schema.prisma          # Database schema
 │   ├── package.json
-│   ├── server.js                      # Express app
+│   ├── server.js              # Express app
 │   ├── .env.example
 │   └── Dockerfile
 ├── nginx/
-│   └── nginx.conf                     # Reverse proxy config
-├── docker-compose.yml                 # Full stack orchestration
-├── README.md                          # Main documentation
-└── DEPLOYMENT.md                      # VPS setup guide
+│   └── nginx.conf             # Reverse proxy config
+├── docker-compose.yml         # Full stack orchestration
+├── README.md                  # Main documentation
+└── DEPLOYMENT.md              # VPS setup guide
 ```
 
 ---
@@ -75,12 +78,14 @@ clickclawpay/
 ## 🔑 Key Features Implemented
 
 ### 1. Agent Engine (OpenClaw-inspired)
+
 - Observe-think-act loop with max 10 iterations
 - Tool calling support (Anthropic Claude format)
 - Conversation history management
 - Automatic tool result feedback to LLM
 
 ### 2. SlickPay Skills
+
 | Skill | Description | Confirmation Required |
 |-------|-------------|----------------------|
 | `create_account` | Register payment account | No |
@@ -93,6 +98,7 @@ clickclawpay/
 | `get_balance` | Check balance | No |
 
 ### 3. Multi-Tenant Security
+
 - Subdomain-based tenant identification
 - Database row-level isolation via Prisma middleware
 - Encrypted SlickPay keys (AES-256-GCM)
@@ -100,6 +106,7 @@ clickclawpay/
 - Audit trail for all operations
 
 ### 4. Subscription System
+
 | Plan | Price | Requests/Month | Users | Features |
 |------|-------|---------------|-------|----------|
 | Starter | 2,000 DZD | 100 | 1 | Basic |
@@ -112,8 +119,8 @@ clickclawpay/
 
 ```bash
 # 1. Clone
-git clone <your-repo-url>
-cd clickclawpay
+git clone https://github.com/Clickdzpro1/ClickPawPay.git
+cd ClickPawPay
 
 # 2. Configure
 cp .env.example .env
@@ -145,6 +152,7 @@ curl http://localhost:3000/health
 ## 📊 Database Schema
 
 **5 Core Tables:**
+
 1. `tenants` - Organizations with encrypted SlickPay keys
 2. `users` - Team members per tenant
 3. `conversations` - Chat history with agent
@@ -156,12 +164,14 @@ curl http://localhost:3000/health
 ## 🎯 Next Steps (Post-MVP)
 
 ### Phase 1 - Beta Launch
+
 - [ ] Build frontend (React dashboard)
 - [ ] Add email notifications
 - [ ] Implement payment gateway for subscriptions
 - [ ] Beta test with 5-10 Algerian sellers
 
 ### Phase 2 - Enhancement
+
 - [ ] WhatsApp/Telegram integration
 - [ ] Bulk transfer operations
 - [ ] Advanced analytics dashboard
@@ -169,6 +179,7 @@ curl http://localhost:3000/health
 - [ ] Multi-language support (Arabic)
 
 ### Phase 3 - Scale
+
 - [ ] Migrate to managed PostgreSQL
 - [ ] Add Redis for distributed caching
 - [ ] Implement webhook support
@@ -212,12 +223,12 @@ curl http://localhost:3000/health
 ## 📝 Environment Variables Required
 
 ```bash
-DATABASE_URL          # PostgreSQL connection
-JWT_SECRET           # Token signing key
-ENCRYPTION_KEY       # For SlickPay key encryption
-ANTHROPIC_API_KEY    # Claude API access
-SLICKPAY_API_URL     # SlickPay base URL
-ALLOWED_ORIGINS      # CORS configuration
+DATABASE_URL       # PostgreSQL connection
+JWT_SECRET         # Token signing key
+ENCRYPTION_KEY     # For SlickPay key encryption
+ANTHROPIC_API_KEY  # Claude API access
+SLICKPAY_API_URL   # SlickPay base URL
+ALLOWED_ORIGINS    # CORS configuration
 ```
 
 ---
@@ -245,6 +256,7 @@ ALLOWED_ORIGINS      # CORS configuration
 ## 🤝 Team Recommendations
 
 **To launch MVP:**
+
 - 1 Backend Developer (maintain Node.js API)
 - 1 Frontend Developer (build React dashboard)
 - 1 DevOps Engineer (manage VPS, scaling)
