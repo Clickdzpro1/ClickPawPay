@@ -7,14 +7,18 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies
-RUN npm install --only=production
+# Install ALL dependencies (prisma CLI needed for generate + db push)
+RUN npm install
 
 # Copy source code
 COPY . .
 
 # Generate Prisma client
 RUN npx prisma generate
+
+# Remove devDependencies after prisma generate to keep image small
+# Keep prisma CLI since we need it at runtime for db push
+RUN npm prune --production && npm install prisma@$(node -e "console.log(require('./package.json').devDependencies.prisma)")
 
 # Create logs directory
 RUN mkdir -p logs
