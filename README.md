@@ -1,4 +1,4 @@
-# ClickClawPay 🚀
+# ClickPawPay 🚀
 
 ![Node](https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js)
 ![License](https://img.shields.io/badge/License-MIT-blue)
@@ -9,14 +9,14 @@
 
 **AI-Powered Payment Management for Algerian Sellers**
 
-ClickClawPay is an AI agent platform that helps Algerian e-commerce sellers manage SlickPay payments through natural language. Built on OpenClaw-inspired architecture, it provides a hosted, multi-tenant SaaS solution where sellers can link their SlickPay API keys and control payments via conversational AI.
+ClickPawPay is an AI agent platform that helps Algerian e-commerce sellers manage SlickPay payments through natural language. Built on OpenClaw-inspired architecture, it provides a hosted, multi-tenant SaaS solution where sellers can link their SlickPay API keys and control payments via conversational AI.
 
 ---
 
 ## 🌟 Features
 
 - **Natural Language Payment Control** - "Send 5000 DA to +213555123456" instead of clicking through dashboards
-- **Multi-Tenant Architecture** - Each seller gets their own subdomain (`yourstore.clickclawpay.com`)
+- **Multi-Tenant Architecture** - Each seller gets their own subdomain (`yourstore.clickpawpay.com`)
 - **Secure API Key Management** - AES-256 encrypted SlickPay credentials
 - **Real-Time Transaction Tracking** - Full audit trail of all payment operations
 - **Usage-Based Billing** - Starter, Pro, and Business tiers with request limits
@@ -28,25 +28,25 @@ ClickClawPay is an AI agent platform that helps Algerian e-commerce sellers mana
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Nginx Reverse Proxy                       │
-│          (Subdomain routing + SSL termination)               │
+│                    Nginx Reverse Proxy                      │
+│              (Subdomain routing + SSL termination)          │
 └────────┬───────────────────────────────────────┬────────────┘
          │                                       │
-    ┌────▼────────┐                      ┌──────▼──────┐
-    │  Frontend   │                      │  Backend    │
-    │  (React)    │◄─────────────────────┤  (Node.js)  │
-    └─────────────┘      API calls       └──────┬──────┘
-                                                 │
-                 ┌───────────────────────────────┼─────────────┐
-                 │                               │             │
-            ┌────▼─────┐                   ┌────▼────┐  ┌─────▼──────┐
-            │ Agent    │                   │  Prisma │  │  SlickPay  │
-            │ Engine   │                   │   ORM   │  │    API     │
-            │ (LLM)    │                   └────┬────┘  └────────────┘
-            └──────────┘                        │
-                                           ┌────▼────────┐
-                                           │ PostgreSQL  │
-                                           └─────────────┘
+  ┌────▼────────┐                        ┌──────▼──────┐
+  │  Frontend   │                        │   Backend   │
+  │   (React)   │◄─────────────────────┤  (Node.js)  │
+  └─────────────┘       API calls        └──────┬──────┘
+                                                │
+                    ┌───────────────────────────┼─────────────┐
+                    │                           │             │
+             ┌────▼─────┐              ┌────▼────┐   ┌─────▼──────┐
+             │  Agent   │              │ Prisma  │   │ SlickPay   │
+             │  Engine  │              │  ORM    │   │    API     │
+             │  (LLM)   │              └────┬────┘   └────────────┘
+             └──────────┘                   │
+                                    ┌────▼────────┐
+                                    │  PostgreSQL │
+                                    └─────────────┘
 ```
 
 ### Core Components
@@ -74,8 +74,8 @@ ClickClawPay is an AI agent platform that helps Algerian e-commerce sellers mana
 **1. Clone the repository**
 
 ```bash
-git clone https://github.com/yourusername/clickclawpay.git
-cd clickclawpay
+git clone https://github.com/Clickdzpro1/ClickPawPay.git
+cd ClickPawPay
 ```
 
 **2. Backend setup**
@@ -257,8 +257,8 @@ curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 
 # 2. Clone repo
-git clone https://github.com/yourusername/clickclawpay.git
-cd clickclawpay
+git clone https://github.com/Clickdzpro1/ClickPawPay.git
+cd ClickPawPay
 
 # 3. Configure environment
 cp .env.example .env
@@ -274,11 +274,11 @@ docker-compose up -d
 docker-compose exec api npx prisma migrate deploy
 
 # 7. Configure DNS
-# Point *.clickclawpay.com A record to your VPS IP
+# Point *.clickpawpay.com A record to your VPS IP
 
 # 8. Setup SSL (Let's Encrypt)
 sudo apt install certbot
-sudo certbot certonly --standalone -d clickclawpay.com -d *.clickclawpay.com
+sudo certbot certonly --standalone -d clickpawpay.com -d *.clickpawpay.com
 ```
 
 ---
@@ -301,7 +301,7 @@ tail -f backend/logs/combined.log
 **Database backups:**
 
 ```bash
-docker-compose exec postgres pg_dump -U clickclawpay clickclawpay > backup.sql
+docker-compose exec postgres pg_dump -U clickpawpay clickpawpay > backup.sql
 ```
 
 ---
@@ -325,9 +325,9 @@ MIT License - see [LICENSE](LICENSE)
 ## 🆘 Support
 
 - **Documentation:** [docs/](./docs/)
-- **Issues:** [GitHub Issues](https://github.com/yourusername/clickclawpay/issues)
-- **Email:** support@clickclawpay.com
-- **Discord:** [Join our community](https://discord.gg/clickclawpay)
+- **Issues:** [GitHub Issues](https://github.com/Clickdzpro1/ClickPawPay/issues)
+- **Email:** support@clickpawpay.com
+- **Discord:** [Join our community](https://discord.gg/clickpawpay)
 
 ---
 
