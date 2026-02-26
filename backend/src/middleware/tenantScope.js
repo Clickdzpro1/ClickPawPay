@@ -3,10 +3,9 @@
 // Must run after authMiddleware (which sets req.user).
 // Attaches req.tenant for use in downstream route handlers.
 
-const { PrismaClient } = require('@prisma/client');
+const prisma  = require('../utils/prisma');
 const logger = require('../utils/logger');
 
-const prisma = new PrismaClient();
 
 module.exports = async (req, res, next) => {
   try {
