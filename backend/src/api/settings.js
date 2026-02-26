@@ -1,12 +1,11 @@
 // Settings API — manage tenant settings and test integrations
 const express        = require('express');
 const router         = express.Router();
-const { PrismaClient } = require('@prisma/client');
+const prisma          = require('../utils/prisma');
 const { encrypt, decrypt } = require('../utils/encryption');
 const SlickPayClient = require('../utils/slickpayClient');
 const logger         = require('../utils/logger');
 
-const prisma = new PrismaClient();
 
 /**
  * GET /api/settings
