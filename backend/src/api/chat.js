@@ -1,12 +1,11 @@
 // Chat API - Main endpoint for agent interaction
 const express = require('express');
 const router  = express.Router();
-const { PrismaClient } = require('@prisma/client');
+const prisma       = require('../utils/prisma');
 const AgentEngine = require('../agent/engine');
 const { decrypt }  = require('../utils/encryption');
 const logger = require('../utils/logger');
 
-const prisma = new PrismaClient();
 
 // ── AgentEngine singleton — created once at module load, reused per request ──
 const agent = new AgentEngine({
