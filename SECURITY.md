@@ -3,8 +3,8 @@
 ## Supported Versions
 
 | Version | Supported |
-|---------|-----------|
-| 1.x     | ✅ Yes    |
+|---------|----------|
+| 1.x | ✅ Yes |
 
 ## Reporting a Vulnerability
 
@@ -26,7 +26,7 @@ Instead, send a private email to:
 - Critical vulnerabilities will be patched within **7 days**
 - We will credit you in the changelog (unless you prefer to remain anonymous)
 
-## Security Features Built Into ClickClawPay
+## Security Features Built Into ClickPawPay
 
 - **AES-256-GCM** encryption for all stored SlickPay API keys
 - **JWT** authentication with short-lived tokens
