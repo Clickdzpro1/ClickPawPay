@@ -12,10 +12,10 @@ if (missingEnv.length > 0) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const express = require('express');
-const helmet = require('helmet');
-const cors = require('cors');
-const logger = require('./src/utils/logger');
-const prisma = require('./src/utils/prisma');
+const helmet  = require('helmet');
+const cors    = require('cors');
+const logger  = require('./src/utils/logger');
+const prisma  = require('./src/utils/prisma');
 
 // Import routes
 const authRoutes        = require('./src/api/auth');
@@ -27,10 +27,10 @@ const settingsRoutes    = require('./src/api/settings');
 
 // Import middleware
 const tenantScopeMiddleware = require('./src/middleware/tenantScope');
-const authMiddleware = require('./src/middleware/auth');
-const rateLimitMiddleware = require('./src/middleware/rateLimit');
+const authMiddleware        = require('./src/middleware/auth');
+const { chatLimiter, authLimiter } = require('./src/middleware/rateLimit');
 
-const app = express();
+const app  = express();
 const PORT = process.env.PORT || 3000;
 
 // ── Security middleware ──────────────────────────────────────────────────────
@@ -38,13 +38,13 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", 'data:', 'https:'],
+      scriptSrc:  ["'self'"],
+      styleSrc:   ["'self'", "'unsafe-inline'"],
+      imgSrc:     ["'self'", 'data:', 'https:'],
       connectSrc: ["'self'", process.env.SLICKPAY_API_URL || 'https://api.slick-pay.com'],
-      fontSrc: ["'self'"],
-      objectSrc: ["'none'"],
-      frameSrc: ["'none'"],
+      fontSrc:    ["'self'"],
+      objectSrc:  ["'none'"],
+      frameSrc:   ["'none'"],
       upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null
     }
   },
@@ -101,11 +101,12 @@ app.get('/health', async (req, res) => {
 });
 
 // Public routes (no auth required)
-app.use('/api/auth', rateLimitMiddleware, authRoutes);
+// Use authLimiter for auth routes (5 attempts / 15 min)
+app.use('/api/auth', authLimiter, authRoutes);
 
 // Protected routes (require authentication and tenant scope)
 app.use('/api/tenants',      authMiddleware, tenantRoutes);
-app.use('/api/chat',         authMiddleware, tenantScopeMiddleware, rateLimitMiddleware, chatRoutes);
+app.use('/api/chat',         authMiddleware, tenantScopeMiddleware, chatLimiter, chatRoutes);
 app.use('/api/transactions', authMiddleware, tenantScopeMiddleware, transactionRoutes);
 app.use('/api/balance',      authMiddleware, tenantScopeMiddleware, balanceRoutes);
 app.use('/api/settings',     authMiddleware, tenantScopeMiddleware, settingsRoutes);
@@ -143,11 +144,11 @@ const shutdown = async (signal) => {
 };
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGINT',  () => shutdown('SIGINT'));
 
 // Start server
 app.listen(PORT, () => {
-  logger.info(`🚀 ClickPawPay API running on port ${PORT}`);
+  logger.info(`ClickPawPay API running on port ${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
