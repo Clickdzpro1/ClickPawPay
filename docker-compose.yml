@@ -1,17 +1,17 @@
 services:
   # PostgreSQL Database
   postgres:
-    image: postgres:15-alpine
-    container_name: clickclawpay-db
+    image: postgres:16-alpine
+    container_name: clickpawpay-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: clickclawpay
-      POSTGRES_USER: clickclawpay
+      POSTGRES_DB: clickpawpay
+      POSTGRES_USER: clickpawpay
       POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U clickclawpay"]
+      test: ["CMD-SHELL", "pg_isready -U clickpawpay"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -19,7 +19,7 @@ services:
   # Redis (for rate limiting and caching)
   redis:
     image: redis:7-alpine
-    container_name: clickclawpay-redis
+    container_name: clickpawpay-redis
     restart: unless-stopped
     volumes:
       - redis_data:/data
@@ -34,17 +34,17 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: clickclawpay-api
+    container_name: clickpawpay-api
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://clickclawpay:${DB_PASSWORD:-changeme}@postgres:5432/clickclawpay
+      DATABASE_URL: postgresql://clickpawpay:${DB_PASSWORD:-changeme}@postgres:5432/clickpawpay
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       SLICKPAY_API_URL: https://api.slick-pay.com
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173}
     depends_on:
       postgres:
         condition: service_healthy
@@ -64,7 +64,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: clickclawpay-web
+    container_name: clickpawpay-web
     restart: unless-stopped
     environment:
       VITE_API_URL: ${API_URL:-http://localhost:3000}
@@ -74,7 +74,7 @@ services:
   # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
-    container_name: clickclawpay-nginx
+    container_name: clickpawpay-nginx
     restart: unless-stopped
     ports:
       - "80:80"
@@ -92,4 +92,4 @@ volumes:
 
 networks:
   default:
-    name: clickclawpay-network
+    name: clickpawpay-network

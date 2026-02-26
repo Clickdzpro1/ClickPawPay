@@ -1,4 +1,4 @@
-# ClickClawPay Deployment Guide
+# ClickPawPay Deployment Guide
 
 ## VPS Setup (Ubuntu 22.04)
 
@@ -18,9 +18,9 @@ sudo ufw allow 443/tcp
 sudo ufw enable
 
 # Create non-root user
-sudo adduser clickclawpay
-sudo usermod -aG sudo clickclawpay
-su - clickclawpay
+sudo adduser clickpawpay
+sudo usermod -aG sudo clickpawpay
+su - clickpawpay
 ```
 
 ### 2. Install Docker
@@ -48,8 +48,8 @@ docker-compose --version
 ```bash
 # Clone repository
 cd ~
-git clone https://github.com/yourusername/clickclawpay.git
-cd clickclawpay
+git clone https://github.com/Clickdzpro1/ClickPawPay.git
+cd ClickPawPay
 
 # Create environment file
 cp .env.example .env
@@ -69,7 +69,7 @@ JWT_SECRET=$(openssl rand -base64 32)
 ENCRYPTION_KEY=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
 
 # Database
-DATABASE_URL="postgresql://clickclawpay:STRONG_PASSWORD@postgres:5432/clickclawpay"
+DATABASE_URL="postgresql://clickpawpay:STRONG_PASSWORD@postgres:5432/clickpawpay"
 
 # Your Anthropic API key
 ANTHROPIC_API_KEY=sk-ant-your-key-here
@@ -78,7 +78,7 @@ ANTHROPIC_API_KEY=sk-ant-your-key-here
 SLICKPAY_API_URL=https://api.slick-pay.com
 
 # CORS (replace with your domain)
-ALLOWED_ORIGINS=https://clickclawpay.com,https://*.clickclawpay.com
+ALLOWED_ORIGINS=https://clickpawpay.com,https://*.clickpawpay.com
 ```
 
 ### 4. DNS Configuration
@@ -86,16 +86,16 @@ ALLOWED_ORIGINS=https://clickclawpay.com,https://*.clickclawpay.com
 **At your domain registrar (e.g., Namecheap, GoDaddy):**
 
 ```
-Type    Name    Value           TTL
-A       @       YOUR_VPS_IP     300
-A       *       YOUR_VPS_IP     300
+Type  Name  Value            TTL
+A     @     YOUR_VPS_IP      300
+A     *     YOUR_VPS_IP      300
 ```
 
 Wait 5-10 minutes for DNS propagation. Test:
 
 ```bash
-dig clickclawpay.com
-dig test.clickclawpay.com
+dig clickpawpay.com
+dig test.clickpawpay.com
 ```
 
 ### 5. SSL Certificate (Let's Encrypt)
@@ -109,15 +109,15 @@ docker-compose down
 
 # Get wildcard certificate
 sudo certbot certonly --standalone \
-  -d clickclawpay.com \
-  -d *.clickclawpay.com \
+  -d clickpawpay.com \
+  -d *.clickpawpay.com \
   --agree-tos \
   --email your-email@example.com
 
 # Copy certificates to nginx directory
 sudo mkdir -p nginx/ssl
-sudo cp /etc/letsencrypt/live/clickclawpay.com/fullchain.pem nginx/ssl/
-sudo cp /etc/letsencrypt/live/clickclawpay.com/privkey.pem nginx/ssl/
+sudo cp /etc/letsencrypt/live/clickpawpay.com/fullchain.pem nginx/ssl/
+sudo cp /etc/letsencrypt/live/clickpawpay.com/privkey.pem nginx/ssl/
 sudo chmod -R 644 nginx/ssl/*
 
 # Setup auto-renewal
@@ -145,7 +145,7 @@ docker-compose exec api npx prisma migrate deploy
 ### 7. Create First Tenant
 
 ```bash
-curl -X POST https://clickclawpay.com/api/auth/register \
+curl -X POST https://clickpawpay.com/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "subdomain": "demo",
@@ -184,16 +184,13 @@ nano ~/backup.sh
 DATE=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR=~/backups
 mkdir -p $BACKUP_DIR
-
-docker-compose exec -T postgres pg_dump -U clickclawpay clickclawpay > $BACKUP_DIR/backup_$DATE.sql
+docker-compose exec -T postgres pg_dump -U clickpawpay clickpawpay > $BACKUP_DIR/backup_$DATE.sql
 find $BACKUP_DIR -name "backup_*.sql" -mtime +7 -delete
-
 echo "Backup completed: backup_$DATE.sql"
 ```
 
 ```bash
 chmod +x ~/backup.sh
-
 # Schedule daily backups
 crontab -e
 # Add: 0 2 * * * ~/backup.sh
@@ -202,7 +199,7 @@ crontab -e
 **Restore from backup:**
 
 ```bash
-docker-compose exec -T postgres psql -U clickclawpay clickclawpay < backup.sql
+docker-compose exec -T postgres psql -U clickpawpay clickpawpay < backup.sql
 ```
 
 ### 9. Performance Tuning
@@ -218,7 +215,7 @@ postgres:
 
 ```nginx
 events {
-    worker_connections 2048;
+  worker_connections 2048;
 }
 ```
 
@@ -269,9 +266,9 @@ docker-compose restart api
 **Database connection issues:**
 
 ```bash
-docker-compose exec postgres psql -U clickclawpay
-\l  # List databases
-\dt # List tables
+docker-compose exec postgres psql -U clickpawpay
+\l   # List databases
+\dt  # List tables
 ```
 
 **SSL certificate errors:**
@@ -322,6 +319,6 @@ Access: http://YOUR_VPS_IP:9000
 
 ---
 
-**Your ClickClawPay instance is now live! 🚀**
+**Your ClickPawPay instance is now live! 🚀**
 
-Access: https://clickclawpay.com
+Access: https://clickpawpay.com

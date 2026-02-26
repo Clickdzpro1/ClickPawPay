@@ -2,9 +2,10 @@
 
 ## All Files Generated ✅
 
-Your complete ClickClawPay codebase is ready! Here's what was created:
+Your complete ClickPawPay codebase is ready! Here's what was created:
 
 ### Backend Files
+
 - ✅ `package.json` - Dependencies
 - ✅ `server.js` - Express app
 - ✅ `schema.prisma` - Database schema
@@ -22,11 +23,13 @@ Your complete ClickClawPay codebase is ready! Here's what was created:
 - ✅ `.env.example` - Environment template
 
 ### Infrastructure Files
+
 - ✅ `backend-dockerfile` - Container config
 - ✅ `docker-compose.yml` - Full stack
 - ✅ `nginx.conf` - Reverse proxy
 
 ### Documentation
+
 - ✅ `README.md` - Main documentation
 - ✅ `DEPLOYMENT.md` - VPS setup guide
 - ✅ `PROJECT-SUMMARY.md` - Technical overview
@@ -48,8 +51,8 @@ Since I cannot directly push to GitHub, here's how to do it:
 
 ```bash
 # Create project directory
-mkdir clickclawpay
-cd clickclawpay
+mkdir clickpawpay
+cd clickpawpay
 
 # Create folder structure
 mkdir -p backend/src/agent
@@ -67,7 +70,7 @@ mkdir -p docs
 Download all the files I created and place them according to this structure:
 
 ```
-clickclawpay/
+clickpawpay/
 ├── backend/
 │   ├── src/
 │   │   ├── agent/
@@ -104,11 +107,10 @@ clickclawpay/
 ### Step 3: Initialize Git Repository
 
 ```bash
-cd clickclawpay
+cd clickpawpay
 git init
 git add .
-git commit -m "Initial commit: Complete ClickClawPay backend implementation
-
+git commit -m "Initial commit: Complete ClickPawPay backend implementation
 - OpenClaw-inspired AI agent engine
 - 8 SlickPay skills (transfers, invoices, balance, etc.)
 - Multi-tenant architecture with subdomain routing
@@ -124,16 +126,15 @@ git commit -m "Initial commit: Complete ClickClawPay backend implementation
 ```bash
 # Install GitHub CLI if not installed
 # https://cli.github.com/
-
 gh auth login
-gh repo create clickclawpay --public --source=. --remote=origin
+gh repo create clickpawpay --public --source=. --remote=origin
 git push -u origin main
 ```
 
 **Option B: Via Web Interface**
 
 1. Go to https://github.com/new
-2. Repository name: `clickclawpay`
+2. Repository name: `clickpawpay`
 3. Description: "AI-powered payment agent for Algerian sellers using SlickPay"
 4. Public or Private (your choice)
 5. **DO NOT** initialize with README (we already have one)
@@ -142,7 +143,7 @@ git push -u origin main
 Then run:
 
 ```bash
-git remote add origin https://github.com/YOUR_USERNAME/clickclawpay.git
+git remote add origin https://github.com/YOUR_USERNAME/clickpawpay.git
 git branch -M main
 git push -u origin main
 ```
@@ -150,8 +151,9 @@ git push -u origin main
 ### Step 5: Verify Upload
 
 Visit your repository:
+
 ```
-https://github.com/YOUR_USERNAME/clickclawpay
+https://github.com/YOUR_USERNAME/clickpawpay
 ```
 
 You should see:
@@ -165,7 +167,9 @@ You should see:
 ## 🏷️ Recommended Repository Settings
 
 ### Add Topics
+
 Go to your repo → About (gear icon) → Add topics:
+
 - `ai-agent`
 - `openclaw`
 - `slickpay`
@@ -177,13 +181,15 @@ Go to your repo → About (gear icon) → Add topics:
 - `saas`
 
 ### Create Repository Description
+
 ```
 AI-powered payment management platform for Algerian sellers. Built on OpenClaw architecture with SlickPay integration. Multi-tenant SaaS with natural language payment control.
 ```
 
 ### Add Website URL
+
 ```
-https://clickclawpay.com
+https://clickpawpay.com
 ```
 
 ---
@@ -211,6 +217,7 @@ gh issue create --title "Add frontend setup guide" --label documentation
 ## 🌟 Repository Visibility Checklist
 
 Before making public, ensure:
+
 - [ ] No sensitive data in code (API keys, passwords)
 - [ ] `.env.example` used instead of `.env`
 - [ ] `.gitignore` properly configured
@@ -239,7 +246,8 @@ Before making public, ensure:
 
 ## 🎉 You're Done!
 
-Your complete ClickClawPay backend is now on GitHub and ready for:
+Your complete ClickPawPay backend is now on GitHub and ready for:
+
 1. **Collaboration** - Share with team members
 2. **Deployment** - Use GitHub Actions for CI/CD
 3. **Version Control** - Track all changes

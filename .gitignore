@@ -16,7 +16,6 @@ logs/
 # Database
 *.db
 *.sqlite
-prisma/migrations/
 
 # Build outputs
 dist/

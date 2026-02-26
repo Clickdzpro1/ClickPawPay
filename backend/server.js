@@ -1,4 +1,4 @@
-// ClickClawPay Backend Server
+// ClickPawPay Backend Server
 require('dotenv').config();
 
 // ── Fail-fast: crash immediately if required secrets are missing ──────────────
@@ -14,8 +14,8 @@ if (missingEnv.length > 0) {
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
-const { PrismaClient } = require('@prisma/client');
 const logger = require('./src/utils/logger');
+const prisma = require('./src/utils/prisma');
 
 // Import routes
 const authRoutes        = require('./src/api/auth');
@@ -31,13 +31,40 @@ const authMiddleware = require('./src/middleware/auth');
 const rateLimitMiddleware = require('./src/middleware/rateLimit');
 
 const app = express();
-const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
-// Security middleware
-app.use(helmet());
+// ── Security middleware ──────────────────────────────────────────────────────
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'", process.env.SLICKPAY_API_URL || 'https://api.slick-pay.com'],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      frameSrc: ["'none'"],
+      upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null
+    }
+  },
+  crossOriginEmbedderPolicy: false
+}));
+
+// ── CORS — never allow credentials with wildcard origin ──────────────────────
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['http://localhost:5173'];
+
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (server-to-server, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`Origin ${origin} not allowed by CORS`));
+  },
   credentials: true
 }));
 
@@ -55,12 +82,22 @@ app.use((req, res, next) => {
 });
 
 // Health check
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'healthy', 
-    timestamp: new Date().toISOString(),
-    service: 'ClickClawPay API'
-  });
+app.get('/health', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      service: 'ClickPawPay API'
+    });
+  } catch (err) {
+    res.status(503).json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      service: 'ClickPawPay API',
+      error: 'Database connection failed'
+    });
+  }
 });
 
 // Public routes (no auth required)
@@ -79,30 +116,38 @@ app.use((req, res) => {
 });
 
 // Error handler
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
+  // Handle CORS errors specifically
+  if (err.message && err.message.includes('not allowed by CORS')) {
+    return res.status(403).json({ error: 'CORS: Origin not allowed' });
+  }
+
   logger.error('Unhandled error', {
     error: err.message,
     stack: err.stack,
     path: req.path
   });
-  
+
   res.status(err.status || 500).json({
-    error: process.env.NODE_ENV === 'production' 
-      ? 'Internal server error' 
+    error: process.env.NODE_ENV === 'production'
+      ? 'Internal server error'
       : err.message
   });
 });
 
 // Graceful shutdown
-process.on('SIGTERM', async () => {
-  logger.info('SIGTERM received, shutting down gracefully');
+const shutdown = async (signal) => {
+  logger.info(`${signal} received, shutting down gracefully`);
   await prisma.$disconnect();
   process.exit(0);
-});
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 
 // Start server
 app.listen(PORT, () => {
-  logger.info(`🚀 ClickClawPay API running on port ${PORT}`);
+  logger.info(`🚀 ClickPawPay API running on port ${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
