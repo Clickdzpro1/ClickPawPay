@@ -1,5 +1,5 @@
 // Tool Executor — Executes agent tool calls with arg validation and timeout
-const SlickPaySkills = require('./slickpaySkills');
+const SlickPaySkills = require('../skills/slickpaySkills');
 const logger = require('../utils/logger');
 
 // Timeout for individual tool executions (ms)
