@@ -1,10 +1,9 @@
 // Transactions API — view and export payment history
 const express = require('express');
 const router  = express.Router();
-const { PrismaClient } = require('@prisma/client');
+const prisma       = require('../utils/prisma');
 const logger  = require('../utils/logger');
 
-const prisma = new PrismaClient();
 
 /**
  * GET /api/transactions/export
