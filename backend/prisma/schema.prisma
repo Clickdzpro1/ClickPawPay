@@ -1,4 +1,4 @@
-// Prisma Schema for ClickClawPay
+// Prisma Schema for ClickPawPay
 generator client {
   provider = "prisma-client-js"
 }
@@ -21,12 +21,12 @@ model Tenant {
   resetDate         DateTime @default(now())
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
-  
+
   users             User[]
   conversations     Conversation[]
   transactions      Transaction[]
   auditLogs         AuditLog[]
-  
+
   @@map("tenants")
 }
 
@@ -43,10 +43,10 @@ model User {
   lastLogin    DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  
+
   tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   conversations  Conversation[]
-  
+
   @@unique([tenantId, email])
   @@index([tenantId])
   @@map("users")
@@ -61,10 +61,10 @@ model Conversation {
   isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  
+
   tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@index([tenantId, userId])
   @@map("conversations")
 }
@@ -84,9 +84,9 @@ model Transaction {
   metadata      Json?           // Additional SlickPay response data
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
-  
+
   tenant        Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+
   @@index([tenantId, createdAt])
   @@index([slickpayRef])
   @@index([tenantId])
@@ -104,9 +104,9 @@ model AuditLog {
   ipAddress  String?
   userAgent  String?
   timestamp  DateTime @default(now())
-  
+
   tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+
   @@index([tenantId, timestamp])
   @@index([tenantId])
   @@map("audit_logs")
