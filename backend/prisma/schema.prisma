@@ -14,7 +14,7 @@ model Tenant {
   subdomain         String   @unique
   name              String
   plan              Plan     @default(STARTER)
-  slickpayKeyEnc    String   // Encrypted SlickPay API key
+    slickpayKeyEnc   String  // SlickPay API key (stored directly for self-hosted)
   isActive          Boolean  @default(true)
   requestCount      Int      @default(0)
   requestLimit      Int      @default(100)
@@ -36,6 +36,7 @@ model User {
   tenantId     String
   email        String
   passwordHash String
+  apiToken    String?  // Hashed API token for OpenClaw-style auth
   role         Role     @default(MEMBER)
   firstName    String?
   lastName     String?
