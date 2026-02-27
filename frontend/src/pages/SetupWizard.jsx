@@ -125,8 +125,16 @@ export default function SetupWizard() {
       toast.success(`Welcome to ClickPawPay, ${tenant.name}!`)
       navigate('/dashboard')
     } catch (err) {
-      const msg = err.response?.data?.error || 'Registration failed. Please try again.'
+      let msg
+      if (!err.response) {
+        msg = 'Cannot connect to server. Is the backend running?'
+      } else if (err.response.status === 502 || err.response.status === 503) {
+        msg = 'Server is starting up or unavailable. Please wait and try again.'
+      } else {
+        msg = err.response?.data?.error || `Registration failed (HTTP ${err.response.status})`
+      }
       toast.error(msg)
+      console.error('Registration error:', err.response?.status, err.response?.data || err.message)
       setLoading(false)
     }
   }
