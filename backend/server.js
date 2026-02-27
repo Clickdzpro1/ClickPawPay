@@ -1,13 +1,20 @@
-// ClickPawPay Backend Server
+// ClickPawPay Backend Server - Simplified
 require('dotenv').config();
+const crypto = require('crypto');
 
-// ── Fail-fast: crash immediately if required secrets are missing ──────────────
-const REQUIRED_ENV = ['JWT_SECRET', 'ENCRYPTION_KEY', 'DATABASE_URL', 'ANTHROPIC_API_KEY'];
-const missingEnv = REQUIRED_ENV.filter(k => !process.env[k]);
-if (missingEnv.length > 0) {
-  console.error(`\nFATAL: Missing required environment variables: ${missingEnv.join(', ')}`);
-  console.error('Copy backend/.env.example to backend/.env and fill in all values.\n');
-  process.exit(1);
+// ── Auto-generate secrets if missing (for easy local/VPS deployment) ────────
+if (!process.env.JWT_SECRET) {
+  process.env.JWT_SECRET = crypto.randomBytes(32).toString('hex');
+  console.warn('[WARN] JWT_SECRET auto-generated. Set it in .env for persistence.');
+}
+
+if (!process.env.ENCRYPTION_KEY) {
+  process.env.ENCRYPTION_KEY = crypto.randomBytes(32).toString('hex');
+  console.warn('[WARN] ENCRYPTION_KEY auto-generated. Set it in .env for persistence.');
+}
+
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.warn('[WARN] ANTHROPIC_API_KEY not set. AI chat features will be disabled.');
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -51,18 +58,34 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// ── CORS — never allow credentials with wildcard origin ──────────────────────
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:5173', 'http://localhost', 'http://127.0.0.1'];
-
+// ── CORS - Allow all *.clickpawpay.com subdomains + localhost ────────────────
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (server-to-server, curl, etc.)
+    // Allow requests with no origin (server-to-server, curl, Postman, etc.)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
+    
+    // Allow localhost and 127.0.0.1 for development
+    if (origin.match(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/)) {
       return callback(null, true);
     }
+    
+    // Allow any *.clickpawpay.com subdomain (http or https)
+    if (origin.match(/^https?:\/\/[a-z0-9-]+\.clickpawpay\.com$/)) {
+      return callback(null, true);
+    }
+    
+    // Allow clickpawpay.com itself
+    if (origin === 'http://clickpawpay.com' || origin === 'https://clickpawpay.com') {
+      return callback(null, true);
+    }
+    
+    // Check custom ALLOWED_ORIGINS env var if set
+    const customOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
+    if (customOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // Reject all others
     return callback(new Error(`Origin ${origin} not allowed by CORS`));
   },
   credentials: true
@@ -120,6 +143,7 @@ app.use((req, res) => {
 app.use((err, req, res, _next) => {
   // Handle CORS errors specifically
   if (err.message && err.message.includes('not allowed by CORS')) {
+    logger.warn('CORS blocked', { origin: req.get('origin'), path: req.path });
     return res.status(403).json({ error: 'CORS: Origin not allowed' });
   }
 
