@@ -22,9 +22,11 @@ if [ -z "$ANTHROPIC_API_KEY" ]; then
   echo "[entrypoint]          Get your key at: https://console.anthropic.com"
 fi
 
-# Run database migrations
-echo "[entrypoint] Running database migrations..."
-npx prisma migrate deploy
+# Push database schema (creates/updates tables from schema.prisma)
+# Uses db push instead of migrate deploy — no migration files needed.
+# Safe to run on every startup: only applies changes if schema differs.
+echo "[entrypoint] Pushing database schema..."
+npx prisma db push --skip-generate
 
 # Start the server
 echo "[entrypoint] Starting Node.js server..."

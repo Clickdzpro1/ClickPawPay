@@ -79,12 +79,17 @@ app.use(cors({
       return callback(null, true);
     }
     
+    // Allow IP-based origins (common for VPS deployments before domain setup)
+    if (origin.match(/^https?:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$/)) {
+      return callback(null, true);
+    }
+
     // Check custom ALLOWED_ORIGINS env var if set
     const customOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
     if (customOrigins.includes(origin)) {
       return callback(null, true);
     }
-    
+
     // Reject all others
     return callback(new Error(`Origin ${origin} not allowed by CORS`));
   },
