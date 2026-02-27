@@ -44,7 +44,7 @@ services:
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       SLICKPAY_API_URL: https://api.slick-pay.com
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost,http://localhost:5173,http://127.0.0.1}
     depends_on:
       postgres:
         condition: service_healthy
