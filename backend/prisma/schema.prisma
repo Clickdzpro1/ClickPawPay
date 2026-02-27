@@ -37,6 +37,7 @@ model User {
   email        String
   passwordHash String
   apiToken    String?  // Hashed API token for OpenClaw-style auth
+  tokenPrefix String?  // First 8 chars of token for fast lookup
   role         Role     @default(MEMBER)
   firstName    String?
   lastName     String?
