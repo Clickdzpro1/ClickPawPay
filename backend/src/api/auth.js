@@ -1,16 +1,16 @@
-// Authentication API
+// Authentication API - Simplified
 const express = require('express');
 const router  = express.Router();
 const bcrypt  = require('bcryptjs');
-const jwt     = require('jsonwebtoken');
+const crypto  = require('crypto');
 const Joi     = require('joi');
 const prisma  = require('../utils/prisma');
-const { encrypt } = require('../utils/encryption');
 const logger  = require('../utils/logger');
 
-// JWT_SECRET and JWT_EXPIRES_IN — guaranteed non-null by server.js startup guard.
-const JWT_SECRET     = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+// Simple token generation (OpenClaw style)
+function generateApiToken() {
+  return 'cpay_' + crypto.randomBytes(32).toString('hex');
+}
 
 // ── Validation schemas (Joi) ──────────────────────────────────────────────────────
 const registerSchema = Joi.object({
@@ -33,12 +33,11 @@ const loginSchema = Joi.object({
 });
 
 // ── Constant-time dummy hash (prevents user-enumeration via login timing) ─────
-// Generated once: bcrypt.hashSync('__dummy__', 12)
 const DUMMY_HASH = '$2a$12$WwAb7bGXe3GFqeEANHAHEeG9N9r3vqpmJ.oV6sQJlpANRPSmm3kKK';
-// ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * POST /api/auth/register - Register new tenant
+ * Returns a simple API token (cpay_xxxxx)
  */
 router.post('/register', async (req, res) => {
   try {
@@ -62,19 +61,21 @@ router.post('/register', async (req, res) => {
     // Hash password using bcrypt (cost factor 12)
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // Encrypt SlickPay key with AES-256-GCM
-    const slickpayKeyEnc = encrypt(slickpayKey);
+    // Generate simple API token
+    const apiToken = generateApiToken();
+    const tokenHash = await bcrypt.hash(apiToken, 10);
 
     // Set request limit based on plan
     const requestLimits = { STARTER: 100, PRO: 1000, BUSINESS: 999999 };
 
-    // Create tenant and owner user in one atomic operation
+    // Store SlickPay key directly (no encryption needed for open-source/self-hosted)
+    // For future SaaS version, we can add encryption later
     const tenant = await prisma.tenant.create({
       data: {
         subdomain,
         name,
         plan,
-        slickpayKeyEnc,
+        slickpayKeyEnc: slickpayKey, // Store directly for now
         requestLimit: requestLimits[plan],
         users: {
           create: {
@@ -82,7 +83,8 @@ router.post('/register', async (req, res) => {
             passwordHash,
             role: 'OWNER',
             firstName: name.split(' ')[0],
-            lastName:  name.split(' ').slice(1).join(' ') || ''
+            lastName:  name.split(' ').slice(1).join(' ') || '',
+            apiToken: tokenHash // Store hashed token for validation
           }
         }
       },
@@ -91,17 +93,13 @@ router.post('/register', async (req, res) => {
 
     const user = tenant.users[0];
 
-    // Generate JWT
-    const token = jwt.sign(
-      { userId: user.id, tenantId: tenant.id, role: user.role },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN, algorithm: 'HS256' }
-    );
-
     logger.info('Tenant registered', { tenantId: tenant.id, subdomain });
 
+    // Return the plain API token (user needs to save this)
     return res.status(201).json({
-      token,
+      success: true,
+      message: 'Account created successfully! Save your API token - it won\'t be shown again.',
+      token: apiToken, // cpay_xxxxx format
       tenant: {
         id:        tenant.id,
         subdomain: tenant.subdomain,
@@ -116,13 +114,14 @@ router.post('/register', async (req, res) => {
     });
 
   } catch (error) {
-    logger.error('Registration error', { error: error.message });
-    return res.status(500).json({ error: 'Registration failed' });
+    logger.error('Registration error', { error: error.message, stack: error.stack });
+    return res.status(500).json({ error: 'Registration failed', details: error.message });
   }
 });
 
 /**
  * POST /api/auth/login - Login
+ * Returns a simple API token
  */
 router.post('/login', async (req, res) => {
   try {
@@ -147,8 +146,7 @@ router.post('/login', async (req, res) => {
 
     const user = tenant?.users?.[0] ?? null;
 
-    // Always run bcrypt — prevents user-enumeration via response timing.
-    // If user not found, compare against a dummy hash (takes same time).
+    // Always run bcrypt — prevents user-enumeration via response timing
     const hashToCompare = user ? user.passwordHash : DUMMY_HASH;
     const isValid = await bcrypt.compare(password, hashToCompare);
 
@@ -160,23 +158,24 @@ router.post('/login', async (req, res) => {
       return res.status(403).json({ error: 'Account suspended' });
     }
 
-    // Update last login (fire-and-forget, non-critical)
-    prisma.user.update({
-      where: { id: user.id },
-      data:  { lastLogin: new Date() }
-    }).catch(() => {});
+    // Generate new API token on each login
+    const apiToken = generateApiToken();
+    const tokenHash = await bcrypt.hash(apiToken, 10);
 
-    // Generate JWT
-    const token = jwt.sign(
-      { userId: user.id, tenantId: tenant.id, role: user.role },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN, algorithm: 'HS256' }
-    );
+    // Update user with new token and last login
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        apiToken: tokenHash,
+        lastLogin: new Date()
+      }
+    });
 
     logger.info('User logged in', { userId: user.id, tenantId: tenant.id });
 
     return res.json({
-      token,
+      success: true,
+      token: apiToken, // Return plain token
       tenant: {
         id:        tenant.id,
         subdomain: tenant.subdomain,
@@ -199,23 +198,36 @@ router.post('/login', async (req, res) => {
 });
 
 /**
- * POST /api/auth/verify - Verify JWT token
+ * POST /api/auth/verify - Verify API token
  */
 router.post('/verify', async (req, res) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
+    if (!token || !token.startsWith('cpay_')) {
+      return res.status(401).json({ error: 'Invalid token format' });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
-    return res.json({
-      valid:    true,
-      userId:   decoded.userId,
-      tenantId: decoded.tenantId
+    // Find user with matching token hash
+    const users = await prisma.user.findMany({
+      where: { isActive: true },
+      include: { tenant: true }
     });
-  } catch (error) {
+
+    for (const user of users) {
+      if (user.apiToken && await bcrypt.compare(token, user.apiToken)) {
+        return res.json({
+          valid: true,
+          userId: user.id,
+          tenantId: user.tenant.id,
+          subdomain: user.tenant.subdomain
+        });
+      }
+    }
+
     return res.status(401).json({ valid: false, error: 'Invalid token' });
+
+  } catch (error) {
+    return res.status(401).json({ valid: false, error: 'Token verification failed' });
   }
 });
 
