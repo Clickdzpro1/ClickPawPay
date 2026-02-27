@@ -9,21 +9,24 @@ const logger  = require('../utils/logger');
 
 // Simple token generation (OpenClaw style)
 function generateApiToken() {
-  return 'cpay_' + crypto.randomBytes(32).toString('hex');
+  const token = 'cpay_' + crypto.randomBytes(32).toString('hex');
+  // Store first 8 chars after prefix for fast DB lookup
+  const prefix = token.substring(5, 13);
+  return { token, prefix };
 }
 
 // ── Validation schemas (Joi) ──────────────────────────────────────────────────────
 const registerSchema = Joi.object({
-  subdomain:    Joi.string()
-                  .pattern(/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/)
-                  .required()
-                  .messages({ 'string.pattern.base': 'Subdomain must be 3-63 lowercase alphanumeric characters or hyphens' }),
-  name:         Joi.string().min(2).max(100).required(),
-  email:        Joi.string().email().required(),
-  password:     Joi.string().min(8).max(128).required()
-                  .messages({ 'string.min': 'Password must be at least 8 characters' }),
-  slickpayKey:  Joi.string().min(10).required(),
-  plan:         Joi.string().valid('STARTER', 'PRO', 'BUSINESS').default('STARTER')
+  subdomain:  Joi.string()
+              .pattern(/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/)
+              .required()
+              .messages({ 'string.pattern.base': 'Subdomain must be 3-63 lowercase alphanumeric characters or hyphens' }),
+  name:       Joi.string().min(2).max(100).required(),
+  email:      Joi.string().email().required(),
+  password:   Joi.string().min(8).max(128).required()
+              .messages({ 'string.min': 'Password must be at least 8 characters' }),
+  slickpayKey: Joi.string().min(10).required(),
+  plan:       Joi.string().valid('STARTER', 'PRO', 'BUSINESS').default('STARTER')
 });
 
 const loginSchema = Joi.object({
@@ -62,7 +65,7 @@ router.post('/register', async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 12);
 
     // Generate simple API token
-    const apiToken = generateApiToken();
+    const { token: apiToken, prefix: tokenPrefix } = generateApiToken();
     const tokenHash = await bcrypt.hash(apiToken, 10);
 
     // Set request limit based on plan
@@ -83,8 +86,9 @@ router.post('/register', async (req, res) => {
             passwordHash,
             role: 'OWNER',
             firstName: name.split(' ')[0],
-            lastName:  name.split(' ').slice(1).join(' ') || '',
-            apiToken: tokenHash // Store hashed token for validation
+            lastName: name.split(' ').slice(1).join(' ') || '',
+            apiToken: tokenHash,     // Store hashed token for validation
+            tokenPrefix              // Store prefix for fast lookup
           }
         }
       },
@@ -101,15 +105,15 @@ router.post('/register', async (req, res) => {
       message: 'Account created successfully! Save your API token - it won\'t be shown again.',
       token: apiToken, // cpay_xxxxx format
       tenant: {
-        id:        tenant.id,
+        id: tenant.id,
         subdomain: tenant.subdomain,
-        name:      tenant.name,
-        plan:      tenant.plan
+        name: tenant.name,
+        plan: tenant.plan
       },
       user: {
-        id:    user.id,
+        id: user.id,
         email: user.email,
-        role:  user.role
+        role: user.role
       }
     });
 
@@ -159,7 +163,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Generate new API token on each login
-    const apiToken = generateApiToken();
+    const { token: apiToken, prefix: tokenPrefix } = generateApiToken();
     const tokenHash = await bcrypt.hash(apiToken, 10);
 
     // Update user with new token and last login
@@ -167,6 +171,7 @@ router.post('/login', async (req, res) => {
       where: { id: user.id },
       data: {
         apiToken: tokenHash,
+        tokenPrefix,
         lastLogin: new Date()
       }
     });
@@ -177,17 +182,17 @@ router.post('/login', async (req, res) => {
       success: true,
       token: apiToken, // Return plain token
       tenant: {
-        id:        tenant.id,
+        id: tenant.id,
         subdomain: tenant.subdomain,
-        name:      tenant.name,
-        plan:      tenant.plan
+        name: tenant.name,
+        plan: tenant.plan
       },
       user: {
-        id:        user.id,
-        email:     user.email,
-        role:      user.role,
+        id: user.id,
+        email: user.email,
+        role: user.role,
         firstName: user.firstName,
-        lastName:  user.lastName
+        lastName: user.lastName
       }
     });
 
@@ -199,6 +204,7 @@ router.post('/login', async (req, res) => {
 
 /**
  * POST /api/auth/verify - Verify API token
+ * Uses tokenPrefix for fast lookup, then bcrypt to verify
  */
 router.post('/verify', async (req, res) => {
   try {
@@ -207,24 +213,34 @@ router.post('/verify', async (req, res) => {
       return res.status(401).json({ error: 'Invalid token format' });
     }
 
-    // Find user with matching token hash
-    const users = await prisma.user.findMany({
-      where: { isActive: true },
+    // Extract prefix for fast DB lookup (first 8 chars after 'cpay_')
+    const prefix = token.substring(5, 13);
+
+    // Find user by token prefix (fast indexed lookup)
+    const user = await prisma.user.findFirst({
+      where: {
+        tokenPrefix: prefix,
+        isActive: true
+      },
       include: { tenant: true }
     });
 
-    for (const user of users) {
-      if (user.apiToken && await bcrypt.compare(token, user.apiToken)) {
-        return res.json({
-          valid: true,
-          userId: user.id,
-          tenantId: user.tenant.id,
-          subdomain: user.tenant.subdomain
-        });
-      }
+    if (!user || !user.apiToken) {
+      return res.status(401).json({ valid: false, error: 'Invalid token' });
     }
 
-    return res.status(401).json({ valid: false, error: 'Invalid token' });
+    // Verify the full token against the stored hash
+    const isValid = await bcrypt.compare(token, user.apiToken);
+    if (!isValid) {
+      return res.status(401).json({ valid: false, error: 'Invalid token' });
+    }
+
+    return res.json({
+      valid: true,
+      userId: user.id,
+      tenantId: user.tenant.id,
+      subdomain: user.tenant.subdomain
+    });
 
   } catch (error) {
     return res.status(401).json({ valid: false, error: 'Token verification failed' });
